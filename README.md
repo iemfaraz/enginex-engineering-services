@@ -22,4 +22,4 @@ Website submissions now POST to https://enginex-quote-dashboard.faraznawaz2014.c
 
 Review dashboard: https://enginex-quote-dashboard.faraznawaz2014.chatgpt.site — sign in with the ChatGPT account whose email is faraznawaz2014@gmail.com. Anonymous users cannot read or update stored quotes. Owner controls include search, statuses, internal notes and contact links. Only the latest 1,000 requests are loaded by this dashboard version. Gmail OAuth setup is not needed for quote storage.
 
-Backend source is maintained in the separate ENGINEX Quote Dashboard Site source repository; GitHub Pages hosts this public frontend. Earlier mailto-only requests were never stored and cannot be recovered automatically.
+The complete dashboard and database backend source is included in [`backend/`](backend/). GitHub Pages hosts the public frontend; the existing ENGINEX Quote Dashboard Site runs the backend and D1 database. Changes to backend source require a separate backend build and publication; GitHub Pages deployment does not run server code. Earlier mailto-only requests were never stored and cannot be recovered automatically.
