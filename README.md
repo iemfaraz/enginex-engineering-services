@@ -15,3 +15,11 @@ Access tokens live only in memory and expire; reconnect as needed. Messages rend
 ## Deploy
 
 GitHub Actions publishes index.html and dashboard.html on each push to main.
+
+## Quote database dashboard
+
+Website submissions now POST to https://enginex-quote-dashboard.faraznawaz2014.chatgpt.site/api/quotes and are stored in a hosted D1 database. A success reference is shown only after the server confirms storage. Duplicate retries use the same reference. Requests are validated and rate-limited. Email and WhatsApp remain optional additional contact methods.
+
+Review dashboard: https://enginex-quote-dashboard.faraznawaz2014.chatgpt.site — sign in with the ChatGPT account whose email is faraznawaz2014@gmail.com. Anonymous users cannot read or update stored quotes. Owner controls include search, statuses, internal notes and contact links. Only the latest 1,000 requests are loaded by this dashboard version. Gmail OAuth setup is not needed for quote storage.
+
+Backend source is maintained in the separate ENGINEX Quote Dashboard Site source repository; GitHub Pages hosts this public frontend. Earlier mailto-only requests were never stored and cannot be recovered automatically.
