@@ -1,6 +1,11 @@
 name: Build ENGINEX Android app
 on:
   workflow_dispatch:
+    inputs:
+      sign_release:
+        description: Sign the Play bundle using the owner-controlled upload key
+        type: boolean
+        default: false
   push:
     branches: [main]
     paths:
@@ -24,12 +29,43 @@ jobs:
           log-accepted-android-sdk-licenses: false
       - uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
+          gradle-version: '8.11.1'
       - name: Install Android platform
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+        run: sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
+      - name: Prepare upload signing key
+        if: github.event_name == 'workflow_dispatch' && inputs.sign_release
+        env:
+          KEYSTORE_DATA: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          STORE_PASS: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE_DATA" && test -n "$STORE_PASS" && test -n "$KEY_ALIAS" && test -n "$KEY_PASS" || { echo 'Configure all four Android upload signing secrets first.'; exit 1; }
+          printf '%s' "$KEYSTORE_DATA" | base64 --decode > "$RUNNER_TEMP/enginex-upload.jks"
+          chmod 600 "$RUNNER_TEMP/enginex-upload.jks"
+          echo "ENGINEX_KEYSTORE_PATH=$RUNNER_TEMP/enginex-upload.jks" >> "$GITHUB_ENV"
       - name: Build and check Android app
         working-directory: android-app
-        run: gradle --no-daemon :app:assembleDebug :app:lintDebug
+        env:
+          ENGINEX_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+          ENGINEX_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+          ENGINEX_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+        run: gradle --no-daemon :app:assembleDebug :app:bundleRelease :app:lintRelease
+      - name: Verify bundle signing status
+        env:
+          SIGNED: ${{ github.event_name == 'workflow_dispatch' && inputs.sign_release }}
+        run: |
+          if [ "$SIGNED" = true ]; then
+            jarsigner -verify android-app/app/build/outputs/bundle/release/app-release.aab
+            echo 'A signed upload bundle was built using the configured owner key.'
+          else
+            echo 'Unsigned bundle: sign with your upload key before uploading to Google Play.'
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: enginex-playstore-bundle-${{ github.event_name == 'workflow_dispatch' && inputs.sign_release && 'signed' || 'unsigned' }}
+          path: android-app/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 30
       - name: Name APK
         run: cp android-app/app/build/outputs/apk/debug/app-debug.apk enginex-android-debug.apk
       - uses: actions/upload-artifact@v4
@@ -43,3 +79,6 @@ jobs:
           name: enginex-android-check-reports
           path: android-app/app/build/reports/
           if-no-files-found: ignore
+      - name: Remove temporary upload key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/enginex-upload.jks"
