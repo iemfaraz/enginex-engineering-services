@@ -9,6 +9,7 @@ let source=fs.readFileSync('app/api/quotes/route.ts','utf8').replace("import { e
 globalThis.__quoteTestEnv={DB};globalThis.__quoteTestAuth=async()=>authenticated?{email:'faraznawaz2014@gmail.com'}:null;
 source=source.replace("import { bearerOwner } from '../../session';", 'const bearerOwner=async()=>!!(await globalThis.__quoteTestAuth());');
 source=source.replace("import {validMedia} from '../../hero';",'const validMedia=()=>true;');
+source=source.replace("import {uploadRow} from '../../quote-upload';",'const uploadRow=async()=>null;');
 const code=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
 const api=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
 const host='https://enginex-quote-dashboard.faraznawaz2014.chatgpt.site';const origin='https://iemfaraz.github.io';
@@ -17,8 +18,8 @@ const request=(data,originValue=origin,method='POST')=>new Request(host+'/api/qu
 assert.equal((await api.GET(new Request(host+'/api/quotes'))).status,403);
 assert.equal((await api.POST(request({...payload,email:'invalid'}))).status,400);
 assert.equal((await api.POST(request(payload,'https://example.com'))).status,403);
-let response=await api.POST(request(payload));assert.equal(response.status,201);assert.equal(response.headers.get('Access-Control-Allow-Origin'),origin);
-assert.equal((await api.POST(request(payload))).status,200);assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM quotes').get().n,1);
+let response=await api.POST(request(payload));assert.equal(response.status,201);const saved=await response.clone().json();assert.match(saved.reference,/^ENX-\d{8}-000001$/);assert.equal(response.headers.get('Access-Control-Allow-Origin'),origin);
+const duplicate=await api.POST(request(payload));assert.equal(duplicate.status,200);assert.equal((await duplicate.json()).reference,saved.reference);assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM quotes').get().n,1);
 assert.equal((await api.PATCH(request({id:payload.id,status:'Contacted',notes:'Review'},host,'PATCH'))).status,403);
 authenticated=true;
 response=await api.GET(new Request(host+'/api/quotes'));assert.equal((await response.json()).quotes[0].name,payload.name);
