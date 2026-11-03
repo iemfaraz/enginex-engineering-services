@@ -24,6 +24,7 @@ jobs:
         run: |
           mkdir -p _site
           cp index.html dashboard.html email-dashboard.html media-editor.js hero-media.js site-settings.js site-content.js _site/
+          cp -R assets _site/assets
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
