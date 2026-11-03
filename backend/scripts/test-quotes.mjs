@@ -10,6 +10,7 @@ globalThis.__quoteTestEnv={DB};globalThis.__quoteTestAuth=async()=>authenticated
 source=source.replace("import { bearerOwner } from '../../session';", 'const bearerOwner=async()=>!!(await globalThis.__quoteTestAuth());');
 source=source.replace("import {validMedia} from '../../hero';",'const validMedia=()=>true;');
 source=source.replace("import {uploadRow} from '../../quote-upload';",'const uploadRow=async()=>null;');
+source=source.replace("import {notifyQuote} from '../../notify';",'const notifyQuote=async()=>{};');
 const code=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
 const api=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
 const host='https://enginex-quote-dashboard.faraznawaz2014.chatgpt.site';const origin='https://iemfaraz.github.io';

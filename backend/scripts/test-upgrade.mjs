@@ -4,8 +4,9 @@ const DB={prepare(q){let a=[];return {bind(...v){a=v;return this},async first(){
 const compile=s=>'data:text/javascript;base64,'+Buffer.from(ts.transpileModule(s,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText).toString('base64');
 const env=s=>s.replace(/import\s*\{\s*env\s*\}\s*from\s*'cloudflare:workers';/,'const env=globalThis.__upgrade;');const session=compile("export const FRONT='https://iemfaraz.github.io';export async function bearerOwner(){return globalThis.__isOwner()}");
 const upload=compile(env(fs.readFileSync('app/quote-upload.ts','utf8')));
+const workflow=compile(env(fs.readFileSync('app/workflow.ts','utf8'))),notify=compile(env(fs.readFileSync('app/notify.ts','utf8')));
 const hero=compile(env(fs.readFileSync('app/hero.ts','utf8'))),site=compile(env(fs.readFileSync('app/site-content.ts','utf8')));
-async function load(path){let s=env(fs.readFileSync(path,'utf8'));for(const name of ['session','hero','site-content','quote-upload'])s=s.replace(new RegExp("'../../"+name+"'",'g'),JSON.stringify(name==='session'?session:name==='hero'?hero:name==='quote-upload'?upload:site));return import(compile(s))}
+async function load(path){let s=env(fs.readFileSync(path,'utf8'));for(const name of ['session','hero','site-content','quote-upload','workflow','notify'])s=s.replace(new RegExp("'../../"+name+"'",'g'),JSON.stringify(name==='session'?session:name==='hero'?hero:name==='quote-upload'?upload:name==='workflow'?workflow:name==='notify'?notify:site));return import(compile(s))}
 const quotes=await load('app/api/quotes/route.ts'),photo=await load('app/api/quote-photo/route.ts'),track=await load('app/api/track/route.ts'),settings=await load('app/api/site-content/route.ts');
 const origin='https://iemfaraz.github.io';const req=(path,body,method='POST')=>new Request('https://backend.test'+path,{method,headers:{Origin:origin,'Content-Type':'application/json'},body:JSON.stringify(body)});
 const id=crypto.randomUUID(),png=new Uint8Array(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jJ1sAAAAASUVORK5CYII=','base64'));
