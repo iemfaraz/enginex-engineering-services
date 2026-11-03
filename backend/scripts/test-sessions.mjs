@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';import fs from 'node:fs';import ts from 'typescript';import {DatabaseSync} from 'node:sqlite';
+const sql=new DatabaseSync(':memory:');sql.exec(fs.readFileSync('drizzle/0001_jittery_photon.sql','utf8').replaceAll('--> statement-breakpoint',''));
+const DB={prepare(query){let args=[];return {bind(...a){args=a;return this},async first(){return sql.prepare(query).get(...args)||null},async run(){return {meta:{changes:Number(sql.prepare(query).run(...args).changes)}}}}}};globalThis.__testEnv={DB};
+const moduleURL=source=>'data:text/javascript;base64,'+Buffer.from(ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText).toString('base64');
+const sessionURL=moduleURL(fs.readFileSync('app/session.ts','utf8').replace("import {env} from 'cloudflare:workers';",'const env=globalThis.__testEnv;'));
+const helpers=await import(sessionURL);
+const route=await import(moduleURL(fs.readFileSync('app/api/session/route.ts','utf8').replace("import {env} from 'cloudflare:workers';",'const env=globalThis.__testEnv;').replace("'../../session'",JSON.stringify(sessionURL))));
+const verifier=helpers.random(),code=helpers.random();sql.prepare('INSERT INTO login_codes VALUES(?,?,?)').run(await helpers.hash(code),await helpers.hash(verifier),Date.now()+60000);
+const req=(v=verifier,origin=helpers.FRONT)=>new Request('https://backend.test/api/session',{method:'POST',headers:{origin,'Content-Type':'application/json'},body:JSON.stringify({code,verifier:v})});
+assert.equal((await route.POST(req(verifier,'https://evil.example'))).status,403);
+assert.equal((await route.POST(req(helpers.random()))).status,401);
+const r=await route.POST(req());assert.equal(r.status,200);const data=await r.json();assert.match(data.token,/^[a-f0-9]{64}$/);assert.equal((await route.POST(req())).status,401);
+const authorized=new Request('https://backend.test/api/quotes',{headers:{authorization:'Bearer '+data.token}});assert.equal(await helpers.bearerOwner(authorized),true);assert.equal(await helpers.bearerOwner(new Request('https://backend.test/api/quotes')),false);
+await route.DELETE(new Request('https://backend.test/api/session',{method:'DELETE',headers:{origin:helpers.FRONT,authorization:'Bearer '+data.token}}));assert.equal(await helpers.bearerOwner(authorized),false);
+console.log('PASS: origin restriction, PKCE verifier, one-use code, authorized session, anonymous rejection, logout revocation');

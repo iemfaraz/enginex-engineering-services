@@ -8,6 +8,13 @@
       "when": 1793725629533,
       "tag": "0000_yummy_gravity",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1793726585308,
+      "tag": "0001_jittery_photon",
+      "breakpoints": true
     }
   ]
 }
