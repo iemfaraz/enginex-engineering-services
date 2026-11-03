@@ -7,7 +7,7 @@ let authenticated=false;
 const DB={prepare(sql){let args=[];return {bind(...a){args=a;return this},async first(){return sqlite.prepare(sql).get(...args)||null},async all(){return {results:sqlite.prepare(sql).all(...args)}},async run(){const r=sqlite.prepare(sql).run(...args);return {meta:{changes:Number(r.changes)}}}}}};
 let source=fs.readFileSync('app/api/quotes/route.ts','utf8').replace("import { env } from 'cloudflare:workers';",'const env=globalThis.__quoteTestEnv;').replace("import { getChatGPTUser } from '../../chatgpt-auth';",'const getChatGPTUser=globalThis.__quoteTestAuth;');
 globalThis.__quoteTestEnv={DB};globalThis.__quoteTestAuth=async()=>authenticated?{email:'faraznawaz2014@gmail.com'}:null;
-source=source.replace("import { bearerOwner } from '../../session';", 'const bearerOwner=async()=>false;');
+source=source.replace("import { bearerOwner } from '../../session';", 'const bearerOwner=async()=>!!(await globalThis.__quoteTestAuth());');
 const code=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
 const api=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
 const host='https://enginex-quote-dashboard.faraznawaz2014.chatgpt.site';const origin='https://iemfaraz.github.io';

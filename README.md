@@ -1,3 +1,7 @@
+# Current access: GitHub token dashboard
+
+Open https://iemfaraz.github.io/enginex-engineering-services/dashboard.html or the website’s #/admin route. Connect a GitHub personal access token owned by iemfaraz. Use a fine-grained token selecting enginex-engineering-services, Contents: Read-only and an expiration. No ChatGPT sign-in is required. The ENGINEX backend verifies the token with GitHub and exchanges it for a 30-minute owner session. The personal access token is never stored; only the opaque session hash and expiration are stored. Customer requests stay in the existing D1 database and are never committed to the public repository. The backend still uses its current hosting; this change removes ChatGPT authentication, not the database host. Do not paste access tokens into chat or commit them.
+
 # ENGINEX Engineering Services
 
 English/Arabic maintenance website. Contact: faraznawaz2014@gmail.com.
