@@ -31,3 +31,9 @@ The complete dashboard and database backend source is included in [`backend/`](b
 ## Dashboard hosted on GitHub Pages
 
 The dashboard UI now runs at https://iemfaraz.github.io/enginex-engineering-services/dashboard.html without redirecting to the backend dashboard. Owner sign-in briefly visits the backend for ChatGPT authorization and returns to the GitHub dashboard using a one-time code bound to a browser-held verifier. Codes expire after 60 seconds; API sessions expire after 30 minutes and are stored only in browser memory. Customer data remains in D1 and is requested only with an owner session. Reloading requires sign-in again. The backend continues to run separately because GitHub Pages does not execute server or database code.
+
+## Homepage Cover & Media
+
+Connect the GitHub-token dashboard and select **Cover & Media**. Upload JPG, PNG, GIF or WebP (up to 5 MB), or MP4/WebM video (up to 15 MB). Uploaded files remain draft-only until selected in a published slideshow. Add up to 10 slides, reorder, replace files, edit captions and crop/fit options, configure automatic advance (3–30 seconds), and publish. An empty published slideshow restores the original illustration. Published files must be removed from the slideshow and that change published before deletion. Up to 30 files can be held in the library. Files live in the backend R2 bucket; settings and metadata live in D1. No uploads or admin tokens are committed to this public repository. Public media is fetched dynamically, so future cover changes do not require a GitHub deployment.
+
+Frontend code: `media-editor.js` (owner controls) and `hero-media.js` (public cover/slideshow). Backend code, R2 binding, D1 migration and isolated media tests are included under `backend/`.

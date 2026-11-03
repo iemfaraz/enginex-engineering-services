@@ -23,7 +23,7 @@ jobs:
       - name: Prepare website
         run: |
           mkdir -p _site
-          cp index.html dashboard.html email-dashboard.html _site/
+          cp index.html dashboard.html email-dashboard.html media-editor.js hero-media.js _site/
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -15,6 +15,13 @@
       "when": 1793726585308,
       "tag": "0001_jittery_photon",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793727900132,
+      "tag": "0002_furry_blackheart",
+      "breakpoints": true
     }
   ]
 }
