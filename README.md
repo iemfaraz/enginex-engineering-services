@@ -1,19 +1,17 @@
 # ENGINEX Engineering Services
 
-Bilingual English/Arabic maintenance website for customers in Saudi Arabia.
+English/Arabic maintenance website. Contact: enginexservices@gmail.com.
 
-## Website
+## Enquiries
 
-The website is the standalone `index.html` in this repository. It has no build dependencies. Open it in a browser for local preview.
+The form prepares a mailto link. Visitors must review and send the email in their mail app. It does not silently submit or guarantee delivery. The Gmail address must be created by its owner before use.
 
-## Deployment
+## Email dashboard
 
-In repository Settings → Pages, select **GitHub Actions** as the source. The included workflow deploys automatically on pushes to `main` and can also be run from Actions → Deploy website to GitHub Pages → Run workflow.
+Open dashboard.html. Enable Gmail API in Google Cloud, configure Google Auth Platform consent, add enginexservices@gmail.com as a test user while in Testing, create an OAuth Web application client, and authorize JavaScript origin https://iemfaraz.github.io. Configure gmail.readonly and gmail.send scopes. Enter the public client ID in the dashboard and connect the owner Gmail account. Never put a client secret or password in this repository. The mailbox must already exist.
 
-## Contact setup
+Access tokens live only in memory and expire; reconnect as needed. Messages render as plain text. The dashboard reads/searches Gmail, opens messages and sends replies after the owner clicks Send. Email data is fetched directly from Google and is not stored in the public repo. Google setup and real-account authorization are still required; live Gmail reading/sending has not been verified. OAuth app testing/verification requirements are controlled by Google.
 
-Business phone and email are not configured. The quotation form prepares a message to copy; it does not send enquiries or confirm bookings. Add verified business contact details before promoting the site.
+## Deploy
 
-## Editing
-
-Update `index.html` and push to `main`. English and Arabic copy are stored in `data-en` / `data-ar` attributes and in the services list.
+GitHub Actions publishes index.html and dashboard.html on each push to main.
