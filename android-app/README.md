@@ -22,15 +22,19 @@ In the repository, open **Actions → Build ENGINEX Android app**. Open a succes
 This is a debug-signed test build, not a Google Play publication. The automatic runner creates a fresh debug signing identity; a later build may require uninstalling an earlier test build before installation. Use an owner-controlled release signing key before distributing updates to customers.
 
 ## Open in Android Studio
-Open this `android-app` directory in Android Studio. The project uses Android Gradle Plugin 8.7.3, Gradle 8.9, JDK 17, Android SDK 35 and minimum Android 8 (API 26). Android Studio can generate a Gradle wrapper with the installed Gradle distribution if one is needed. The GitHub workflow installs Gradle directly and does not depend on a wrapper.
+Open this `android-app` directory in Android Studio. The project uses Android Gradle Plugin 8.10.1, Gradle 8.11.1, JDK 17, Android SDK 36 and minimum Android 8 (API 26). Android Studio can generate a Gradle wrapper with the installed Gradle distribution if one is needed. The GitHub workflow installs Gradle directly and does not depend on a wrapper.
 
-Command line with Gradle 8.9 installed:
+Command line with Gradle 8.11.1 installed:
 
 ```
 gradle :app:assembleDebug :app:lintDebug
 ```
 
 The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
+
+## Play Store release
+
+See [PLAY_STORE_RELEASE.md](PLAY_STORE_RELEASE.md) for the current store listing, privacy policy, Data safety review and owner-controlled signed AAB build. The automatic build produces an unsigned release bundle unless upload signing is configured.
 
 ## Before a public store release
 Prepare an owner-controlled signing key, a release build, a public privacy policy URL and the required Play Console listing/data-safety disclosures. Verify uploads, Arabic layout, WhatsApp, quotation PDF, offline/retry and tracking on real phones. This repository does not claim Play Store approval or publication.
