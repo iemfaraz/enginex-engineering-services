@@ -18,8 +18,8 @@ const request=(data,originValue=origin,method='POST')=>new Request(host+'/api/qu
 assert.equal((await api.GET(new Request(host+'/api/quotes'))).status,403);
 assert.equal((await api.POST(request({...payload,email:'invalid'}))).status,400);
 assert.equal((await api.POST(request(payload,'https://example.com'))).status,403);
-let response=await api.POST(request(payload));assert.equal(response.status,201);const saved=await response.clone().json();assert.match(saved.reference,/^ENX-\d{8}-000001$/);assert.equal(response.headers.get('Access-Control-Allow-Origin'),origin);
-const duplicate=await api.POST(request(payload));assert.equal(duplicate.status,200);assert.equal((await duplicate.json()).reference,saved.reference);assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM quotes').get().n,1);
+let response=await api.POST(request(payload));assert.equal(response.status,201);const saved=await response.clone().json();assert.match(saved.reference,/^ENX-\d{8}-000001$/);assert.equal(saved.id,saved.reference);assert.equal(saved.requestId,payload.id);assert.equal(response.headers.get('Access-Control-Allow-Origin'),origin);
+const duplicate=await api.POST(request(payload));assert.equal(duplicate.status,200);const repeated=await duplicate.json();assert.equal(repeated.reference,saved.reference);assert.equal(repeated.id,saved.reference);assert.equal(sqlite.prepare('SELECT COUNT(*) AS n FROM quotes').get().n,1);
 assert.equal((await api.PATCH(request({id:payload.id,status:'Contacted',notes:'Review'},host,'PATCH'))).status,403);
 authenticated=true;
 response=await api.GET(new Request(host+'/api/quotes'));assert.equal((await response.json()).quotes[0].name,payload.name);
@@ -27,3 +27,7 @@ assert.equal((await api.PATCH(request({id:payload.id,status:'Contacted',notes:'F
 for(let i=1;i<10;i++)assert.equal((await api.POST(request({...payload,id:crypto.randomUUID()}))).status,201);
 assert.equal((await api.POST(request({...payload,id:crypto.randomUUID()}))).status,429);
 console.log('PASS: validation, durable SQL insert, duplicate retry, private reads and updates, owner notes and status, CORS, rate limiting.');
+
+const legacyId=crypto.randomUUID();sqlite.prepare('INSERT INTO quotes(id,created_at,name,phone,email,service,city,details,ip_hash) VALUES(?,?,?,?,?,?,?,?,?)').run(legacyId,Date.now(),'Legacy','0500000000','qa@example.com','Electrical','Riyadh','Existing request','legacy');
+const legacy=await (await api.POST(request({...payload,id:legacyId}))).json();assert.match(legacy.id,/^ENX-\d{8}-\d{6}$/);assert.equal(legacy.id,legacy.reference);assert.equal(legacy.requestId,legacyId);assert.equal(sqlite.prepare('SELECT reference FROM quotes WHERE id=?').get(legacyId).reference,legacy.reference);assert.equal((await (await api.POST(request({...payload,id:legacyId}))).json()).reference,legacy.reference);
+console.log('PASS: older clients receive public reference as id; legacy request conversion stays stable.');
