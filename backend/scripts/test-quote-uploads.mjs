@@ -17,4 +17,17 @@ r=await tracker.POST(req('/api/track',{id:' '+saved.reference.toLowerCase()+' ',
 assert.equal((await tracker.POST(req('/api/track',{id:quoteId,email:'qa@example.com'}))).status,200);
 const q2={...payload,id:crypto.randomUUID(),uploads:[]};r=await quotes.POST(req('/api/quotes',q2));assert.match((await r.json()).reference,/-000002$/);
 assert.equal((await uploads.DELETE(new Request(host+'/api/quote-upload?id='+session.id,{method:'DELETE',headers:{origin,Authorization:'Bearer '+session.token}}))).status,409);
-console.log('PASS: 150 MiB multipart upload, oversize rejection, capability isolation, incomplete-parts rejection, idempotent completion/submission, sequential references, email-protected tracking and legacy IDs, submitted-photo protection.');
+// A separate optional video can accompany three photos; enforce each category atomically.
+const vq=crypto.randomUUID();const vs={...start,quoteId:vq,name:'fault.mp4',mime:'video/mp4'};
+assert.equal((await uploads.POST(req('/api/quote-upload',{...vs,size:size+1}))).status,400);
+let vr=await uploads.POST(req('/api/quote-upload',vs));assert.equal(vr.status,201);const v=await vr.json();
+assert.equal((await uploads.POST(req('/api/quote-upload',vs))).status,429);
+const all=[v];for(let n=0;n<3;n++){const pr=await uploads.POST(req('/api/quote-upload',{...start,quoteId:vq,size:3}));assert.equal(pr.status,201);all.push(await pr.json())}
+assert.equal((await uploads.POST(req('/api/quote-upload',{...start,quoteId:vq,size:3}))).status,429);
+const videoParts=[];const vb=new Uint8Array(v.partSize);vb.set([0,0,0,24,102,116,121,112,105,115,111,109]);
+for(let n=1,offset=0;offset<size;n++,offset+=v.partSize){const chunk=vb.slice(0,Math.min(v.partSize,size-offset));const result=await uploads.PUT(new Request(host+'/api/quote-upload?id='+v.id+'&part='+n,{method:'PUT',headers:{origin,Authorization:'Bearer '+v.token,'Content-Length':String(chunk.length)},body:chunk}));assert.equal(result.status,200);videoParts.push(await result.json())}
+assert.equal((await uploads.POST(req('/api/quote-upload',{action:'complete',id:v.id,parts:videoParts},'POST',v.token))).status,200);
+for(const p of all.slice(1)){const result=await uploads.PUT(new Request(host+'/api/quote-upload?id='+p.id+'&part=1',{method:'PUT',headers:{origin,Authorization:'Bearer '+p.token,'Content-Length':'3'},body:new Uint8Array([255,216,255])}));const part=await result.json();assert.equal((await uploads.POST(req('/api/quote-upload',{action:'complete',id:p.id,parts:[part]},'POST',p.token))).status,200)}
+vr=await quotes.POST(req('/api/quotes',{...payload,id:vq,uploads:all.map(p=>({id:p.id,token:p.token}))}));assert.equal(vr.status,201);const media=JSON.parse(sqlite.prepare('SELECT photos FROM quotes WHERE id=?').get(vq).photos);assert.equal(media.length,4);assert.equal(media.filter(p=>p.mime==='video/mp4').length,1);
+const bad=await (await uploads.POST(req('/api/quote-upload',{...vs,quoteId:crypto.randomUUID(),size:3}))).json();const badPart=await (await uploads.PUT(new Request(host+'/api/quote-upload?id='+bad.id+'&part=1',{method:'PUT',headers:{origin,Authorization:'Bearer '+bad.token,'Content-Length':'3'},body:new Uint8Array([255,216,255])}))).json();assert.equal((await uploads.POST(req('/api/quote-upload',{action:'complete',id:bad.id,parts:[badPart]},'POST',bad.token))).status,400);
+console.log('PASS: 150 MiB image and video multipart uploads, oversize and invalid-video rejection, 3-photo + 1-video bounds, private capabilities, retry safety, sequential references and tracking.');
